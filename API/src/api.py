@@ -16,9 +16,9 @@ async def generate_text_api(request: GenerationRequest):
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{LLM_SERVICE_URL}/generate",
+                LLM_SERVICE_URL,
                 json={"prompt": request.prompt},
-                timeout=120.0
+                timeout=180.0
             )
         if response.status_code == 200:
             return response.json()

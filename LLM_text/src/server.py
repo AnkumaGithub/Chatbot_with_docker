@@ -1,15 +1,11 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from .llm import generate_text
+from llm import generate_text
 import torch
 
 app = FastAPI()
-if torch.cuda.is_available():
-    device = torch.device("cuda:0")
-elif torch.backends.mps.is_available():
-    device = torch.device("mps:0")
-else:
-    device = torch.device("cpu")
+device = torch.device("cpu")
+print(f"Using device: {device}")
 
 class GenerationRequest(BaseModel):
     prompt: str

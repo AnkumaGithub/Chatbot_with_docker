@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from LM import generate_text
+from LLM_text.src.llm import generate_text
 import torch
-
 app = FastAPI()
 
 if torch.cuda.is_available():
@@ -18,6 +17,7 @@ class GenerationRequest(BaseModel):
 @app.post("/generate")
 async def generate_text_api(request: GenerationRequest):
     try:
+        print(device)
         result = generate_text(request.prompt, device)
         return {"generated_text": result}
     except Exception as e:

@@ -4,7 +4,7 @@ import argparse
 
 
 def generate_text(prompt: str, device: torch.device) -> str:
-    MODEL_NAME = "facebook/opt-125m"
+    MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     model = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to(device)
 
@@ -13,8 +13,11 @@ def generate_text(prompt: str, device: torch.device) -> str:
     output = model.generate(
         input_ids=inputs.input_ids,
         attention_mask=inputs.attention_mask,
-        max_new_tokens=50,
-        pad_token_id=tokenizer.eos_token_id
+        max_new_tokens=128,
+        pad_token_id=tokenizer.eos_token_id,
+        do_sample=True,
+        temperature=0.7,
+        top_p=0.9
     )
     return tokenizer.decode(output[0], skip_special_tokens=True)
 

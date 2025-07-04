@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bot-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bot
+  template:
+    metadata:
+      labels:
+        app: bot
+    spec:
+      containers:
+      - name: bot-container
+        image: your-username/bot-service:latest
+        env:
+        - name: TELEGRAM_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: telegram-secrets
+              key: token
+        - name: API_URL
+          value: "http://api-service:8000"

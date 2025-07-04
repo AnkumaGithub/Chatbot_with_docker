@@ -4,7 +4,12 @@ from .llm import generate_text
 import torch
 
 app = FastAPI()
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps:0")
+else:
+    device = torch.device("cpu")
 
 class GenerationRequest(BaseModel):
     prompt: str

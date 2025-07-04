@@ -17,7 +17,7 @@ spec:
         image: your-username/bot-service:latest
         env:
           - name: API_URL
-            value: "http://api-service:8000"  # Жёстко прописываем
+            value: "http://api-service:8000"
           - name: TELEGRAM_TOKEN
             valueFrom:
               secretKeyRef:

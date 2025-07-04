@@ -14,10 +14,11 @@ spec:
     spec:
       containers:
       - name: bot-container
-        image: your-username/bot-service:latest
+        image: bot-service:latest
+        imagePullPolicy: Never
         env:
           - name: API_URL
-            value: "http://api-service:8000"
+            value: "http://api-service:8000/generate"
           - name: TELEGRAM_TOKEN
             valueFrom:
               secretKeyRef:

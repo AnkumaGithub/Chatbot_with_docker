@@ -14,12 +14,17 @@ spec:
     spec:
       containers:
       - name: llm-container
-        image: your-username/llm-service:latest
+        image: llm-service:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8000
         resources:
           limits:
-            nvidia.com/gpu: "1"
+            memory: "8Gi"
+            cpu: "4"
+          requests:
+            memory: "6Gi"
+            cpu: "2"
 ---
 apiVersion: v1
 kind: Service

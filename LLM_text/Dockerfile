@@ -1,26 +1,38 @@
-FROM --platform=linux/arm64 python:3.10-slim
+# Используем базовый образ Python для ARM64
+FROM --platform=linux/arm64 python:3.11-slim
 
-WORKDIR /app
-
-# Установка зависимостей для PyTorch и MPS
+# Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
+    git \
+    build-essential \
     libopenblas-dev \
-    gfortran \
-    libomp-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Установка PyTorch с поддержкой MPS
+# Установка PyTorch для ARM
 RUN pip install --no-cache-dir \
     torch \
     torchvision \
     torchaudio \
     --index-url https://download.pytorch.org/whl/nightly/cpu
 
-# Установка остальных зависимостей
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Установка transformers и других зависимостей
+RUN pip install --no-cache-dir \
+    transformers==4.40.0 \
+    accelerate==0.30.0 \
+    fastapi==0.110.0 \
+    uvicorn==0.29.0 \
+    python-dotenv==1.0.0
 
-COPY . .
+WORKDIR /app
 
-# Проверяем доступность MPS при запуске
-CMD ["sh", "-c", "python -c 'import torch; print(\"MPS available:\", torch.backends.mps.is_available())' && uvicorn server:app --host 0.0.0.0 --port 8000"]
+# Копируем только необходимые файлы
+COPY src/llm.py .
+COPY src/server.py .
+
+# Предварительная загрузка модели GPT-2
+RUN python3 -c "\
+from transformers import AutoModel; \
+model = AutoModel.from_pretrained('gpt2'); \
+print('GPT-2 model successfully loaded!')"
+
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -14,12 +14,13 @@ spec:
     spec:
       containers:
       - name: api-container
-        image: your-username/api-service:latest
+        image: api-service:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8000
         env:
         - name: LLM_SERVICE_URL
-          value: "http://llm-service:8000"
+          value: "http://llm-service:8000/generate"
 ---
 apiVersion: v1
 kind: Service

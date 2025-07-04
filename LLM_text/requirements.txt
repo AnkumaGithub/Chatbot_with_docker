@@ -1,4 +1,6 @@
-fastapi==0.115.14
-pydantic==2.11.7
-torch==2.7.1
-transformers==4.53.0
+torch>=2.3.0
+transformers>=4.40.0
+accelerate>=0.30.0
+fastapi>=0.110.0
+uvicorn>=0.29.0
+python-dotenv>=1.0.0

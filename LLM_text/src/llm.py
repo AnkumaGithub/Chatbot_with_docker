@@ -2,9 +2,10 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 import argparse
 
-
 def generate_text(prompt: str, device: torch.device) -> str:
-    MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
+    MODEL_NAME = "gpt2"
+
+    # Инициализация модели с флагом trust_remote_code
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     model = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to(device)
 
@@ -16,12 +17,12 @@ def generate_text(prompt: str, device: torch.device) -> str:
         max_new_tokens=128,
         pad_token_id=tokenizer.eos_token_id,
         eos_token_id=tokenizer.eos_token_id,
-        do_sample=True,
-        temperature=0.7,
-        top_p=0.9
     )
-    return tokenizer.decode(output[0], skip_special_tokens=True)
+    print(f"Generated tokens: {output}")
 
+    result = tokenizer.decode(output[0], skip_special_tokens=True)
+    print(f"Decoded text: {result}")
+    return result
 
 def main():
     if torch.cuda.is_available():

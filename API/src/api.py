@@ -1,15 +1,12 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from pydantic import BaseModel
-from LLM_text.src.llm import generate_text
-import torch
-app = FastAPI()
+import httpx
+import os
 
-if torch.cuda.is_available():
-    device = torch.device("cuda:0")
-elif torch.backends.mps.is_available():
-    device = torch.device("mps:0")
-else:
-    device = torch.device("cpu")
+app = FastAPI()
+load_dotenv()
+LLM_SERVICE_URL = os.getenv("LLM_SERVICE_URL")
 
 class GenerationRequest(BaseModel):
     prompt: str
@@ -17,12 +14,18 @@ class GenerationRequest(BaseModel):
 @app.post("/generate")
 async def generate_text_api(request: GenerationRequest):
     try:
-        print(device)
-        result = generate_text(request.prompt, device)
-        return {"generated_text": result}
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{LLM_SERVICE_URL}/generate",
+                json={"prompt": request.prompt},
+                timeout=120.0
+            )
+        if response.status_code == 200:
+            return response.json()
+        return {"error": f"LLM service error: {response.status_code}"}
     except Exception as e:
         return {"error": str(e)}
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "device": str(device)}
+    return {"status": "ok"}

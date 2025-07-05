@@ -1,6 +1,5 @@
 FROM --platform=linux/arm64 python:3.11-slim
 
-# Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
     git \
     build-essential \
@@ -15,7 +14,6 @@ RUN pip install --no-cache-dir \
     torchaudio \
     --index-url https://download.pytorch.org/whl/nightly/cpu
 
-# Установка transformers и других зависимостей
 RUN pip install --no-cache-dir \
     transformers==4.40.0 \
     accelerate==0.30.0 \
@@ -26,7 +24,6 @@ RUN pip install --no-cache-dir \
 
 WORKDIR /app
 
-# Копируем только необходимые файлы
 COPY src/llm.py .
 COPY src/server.py .
 COPY src/kafka_utils.py .

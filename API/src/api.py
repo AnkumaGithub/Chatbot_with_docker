@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from pydantic import BaseModel
-import os
 import uuid
 import asyncio
 from kafka_utils import (
@@ -26,10 +25,8 @@ class GenerationRequest(BaseModel):
 
 @app.post("/generate")
 async def generate_text_api(request: GenerationRequest):
-    # Создаем уникальный ID для запроса
     correlation_id = str(uuid.uuid4())
 
-    # Отправляем запрос в Kafka
     producer = create_producer()
     kafka_message = {
         "correlation_id": correlation_id,
@@ -42,12 +39,10 @@ async def generate_text_api(request: GenerationRequest):
     )
     producer.flush()
 
-    # Создаем Future для ожидания ответа
     future = asyncio.Future()
     pending_requests[correlation_id] = future
 
     try:
-        # Ждем ответа 180 секунд
         response = await asyncio.wait_for(future, timeout=180.0)
         return response
     except asyncio.TimeoutError:
@@ -56,7 +51,6 @@ async def generate_text_api(request: GenerationRequest):
 
 @app.on_event("startup")
 async def startup_event():
-    # Запускаем фоновую задачу для чтения ответов
     asyncio.create_task(consume_responses())
 
 

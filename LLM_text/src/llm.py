@@ -5,7 +5,6 @@ import argparse
 def generate_text(prompt: str, device: torch.device) -> str:
     MODEL_NAME = "gpt2"
 
-    # Инициализация модели с флагом trust_remote_code
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     model = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to(device)
 

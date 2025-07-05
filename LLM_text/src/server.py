@@ -29,10 +29,8 @@ def kafka_worker():
             request = deserialize_message(msg.value())
             print(f"Received request: {request['correlation_id']}")
 
-            # Выполняем генерацию текста
             result = generate_text(request['prompt'], device)
 
-            # Отправляем ответ
             response = {
                 "correlation_id": request['correlation_id'],
                 "generated_text": result

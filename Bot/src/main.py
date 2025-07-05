@@ -7,12 +7,10 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import httpx
 
-# Конфигурация
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 API_URL = os.getenv("API_URL")
 
-# Настройка логирования
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO
@@ -21,29 +19,25 @@ logger = logging.getLogger(__name__)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработка команды /start"""
     user = update.effective_user
     await update.message.reply_text(
         f"Привет, {user.first_name}! Я бот с интеграцией LLM. Просто напиши мне что-нибудь, и я сгенерирую ответ.")
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработка команды /help"""
     await update.message.reply_text(
         "Просто отправь мне любое текстовое сообщение, и я обработаю его с помощью нейросети!")
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработка текстовых сообщений"""
     user_message = update.message.text
 
     try:
-        # Отправка запроса к вашему API
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 API_URL,
                 json={"prompt": user_message},
-                timeout=180.0  # Таймаут в секундах
+                timeout=180.0
             )
 
         if response.status_code == 200:
@@ -64,7 +58,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
-    """Запуск бота"""
     application = Application.builder().token(TELEGRAM_TOKEN).build()
 
     # Регистрация обработчиков
@@ -72,7 +65,6 @@ def main():
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Запуск бота
     application.run_polling()
     logger.info("Бот запущен")
 

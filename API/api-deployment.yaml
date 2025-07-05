@@ -21,6 +21,8 @@ spec:
         env:
         - name: LLM_SERVICE_URL
           value: "http://llm-service:8000/generate"
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka-service:9092"
 ---
 apiVersion: v1
 kind: Service

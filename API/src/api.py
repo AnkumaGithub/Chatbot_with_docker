@@ -1,30 +1,90 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from pydantic import BaseModel
-import httpx
 import os
+import uuid
+import asyncio
+from kafka_utils import (
+    REQUEST_TOPIC,
+    RESPONSE_TOPIC,
+    create_producer,
+    deserialize_message,
+    serialize_message,
+    delivery_report as kafka_delivery_report
+)
 
 app = FastAPI()
 load_dotenv()
-LLM_SERVICE_URL = os.getenv("LLM_SERVICE_URL")
+
+# Словарь для отслеживания ожидающих запросов
+pending_requests = {}
+
 
 class GenerationRequest(BaseModel):
     prompt: str
 
+
 @app.post("/generate")
 async def generate_text_api(request: GenerationRequest):
+    # Создаем уникальный ID для запроса
+    correlation_id = str(uuid.uuid4())
+
+    # Отправляем запрос в Kafka
+    producer = create_producer()
+    kafka_message = {
+        "correlation_id": correlation_id,
+        "prompt": request.prompt
+    }
+    producer.produce(
+        topic=REQUEST_TOPIC,
+        value=serialize_message(kafka_message),
+        callback=kafka_delivery_report
+    )
+    producer.flush()
+
+    # Создаем Future для ожидания ответа
+    future = asyncio.Future()
+    pending_requests[correlation_id] = future
+
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                LLM_SERVICE_URL,
-                json={"prompt": request.prompt},
-                timeout=180.0
-            )
-        if response.status_code == 200:
-            return response.json()
-        return {"error": f"LLM service error: {response.status_code}"}
-    except Exception as e:
-        return {"error": str(e)}
+        # Ждем ответа 180 секунд
+        response = await asyncio.wait_for(future, timeout=180.0)
+        return response
+    except asyncio.TimeoutError:
+        return {"error": "LLM service timeout"}
+
+
+@app.on_event("startup")
+async def startup_event():
+    # Запускаем фоновую задачу для чтения ответов
+    asyncio.create_task(consume_responses())
+
+
+async def consume_responses():
+    from kafka_utils import create_consumer, deserialize_message, RESPONSE_TOPIC
+
+    consumer = create_consumer()
+    consumer.subscribe([RESPONSE_TOPIC])
+
+    while True:
+        msg = consumer.poll(1.0)
+        if msg is None:
+            await asyncio.sleep(0.1)
+            continue
+        if msg.error():
+            print(f"Consumer error: {msg.error()}")
+            continue
+
+        try:
+            response = deserialize_message(msg.value())
+            corr_id = response.get('correlation_id')
+
+            if corr_id in pending_requests:
+                pending_requests[corr_id].set_result(response)
+                del pending_requests[corr_id]
+        except Exception as e:
+            print(f"Error processing response: {str(e)}")
+
 
 @app.get("/health")
 async def health_check():

@@ -355,3 +355,11 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+/API/api_dockerfile.txt
+/Bot/bot_dockerfile.txt
+/.idea/Chatbot_with_docker.iml
+/LLM_text/llm_dockerfile.txt
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/vcs.xml

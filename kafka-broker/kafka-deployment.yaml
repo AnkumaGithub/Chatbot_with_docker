@@ -36,6 +36,8 @@ spec:
           value: "PLAINTEXT://kafka-service:9092"
         - name: KAFKA_CFG_LISTENERS
           value: "PLAINTEXT://:9092"
+        - name: KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE
+          value: "true"
         ports:
         - containerPort: 9092
         resources:

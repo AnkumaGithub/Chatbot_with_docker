@@ -3,6 +3,10 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import uuid
 import asyncio
+import numpy as np
+from qdrant_client import QdrantClient
+from qdrant_client.http import models
+from sentence_transformers import SentenceTransformer
 from kafka_utils import (
     REQUEST_TOPIC,
     RESPONSE_TOPIC,
@@ -15,7 +19,15 @@ from kafka_utils import (
 app = FastAPI()
 load_dotenv()
 
-# Словарь для отслеживания ожидающих запросов
+# Конфигурация Qdrant
+QDRANT_URL = "http://qdrant-service:6333"
+COLLECTION_NAME = "prompt_cache"
+EMBEDDING_MODEL = 'all-MiniLM-L6-v2'
+SIMILARITY_THRESHOLD = 0.9  # Порог схожести запросов
+
+# Инициализация моделей и клиентов
+encoder = None
+qdrant_client = None
 pending_requests = {}
 
 
@@ -23,10 +35,75 @@ class GenerationRequest(BaseModel):
     prompt: str
 
 
+@app.on_event("startup")
+async def startup_event():
+    global encoder, qdrant_client
+
+    # Инициализация модели для эмбеддингов
+    encoder = SentenceTransformer(EMBEDDING_MODEL)
+
+    # Инициализация клиента Qdrant
+    qdrant_client = QdrantClient(QDRANT_URL, timeout=10)
+
+    # Создание коллекции если не существует
+    try:
+        qdrant_client.get_collection(COLLECTION_NAME)
+    except Exception:
+        qdrant_client.create_collection(
+            collection_name=COLLECTION_NAME,
+            vectors_config=models.VectorParams(
+                size=encoder.get_sentence_embedding_dimension(),
+                distance=models.Distance.COSINE,
+            )
+        )
+
+    # Запуск потребителя Kafka
+    asyncio.create_task(consume_responses())
+
+
+def get_embedding(text: str) -> list:
+    return encoder.encode(text).tolist()
+
+
+async def find_similar_prompt(prompt: str) -> dict:
+    embedding = get_embedding(prompt)
+    search_result = qdrant_client.search(
+        collection_name=COLLECTION_NAME,
+        query_vector=embedding,
+        limit=1,
+        score_threshold=SIMILARITY_THRESHOLD
+    )
+    return search_result[0].payload if search_result else None
+
+
+async def cache_prompt_response(prompt: str, response: dict):
+    embedding = get_embedding(prompt)
+    point_id = str(uuid.uuid4())
+    qdrant_client.upsert(
+        collection_name=COLLECTION_NAME,
+        points=[
+            models.PointStruct(
+                id=point_id,
+                vector=embedding,
+                payload={
+                    "prompt": prompt,
+                    "response": response
+                }
+            )
+        ]
+    )
+
+
 @app.post("/generate")
 async def generate_text_api(request: GenerationRequest):
+    # Проверка кэша
+    cached = await find_similar_prompt(request.prompt)
+    if cached:
+        return cached["response"]
+
     correlation_id = str(uuid.uuid4())
 
+    # Отправка запроса в Kafka
     producer = create_producer()
     kafka_message = {
         "correlation_id": correlation_id,
@@ -39,19 +116,20 @@ async def generate_text_api(request: GenerationRequest):
     )
     producer.flush()
 
+    # Ожидание ответа
     future = asyncio.Future()
     pending_requests[correlation_id] = future
 
     try:
         response = await asyncio.wait_for(future, timeout=180.0)
+        # Кэширование ответа
+        await cache_prompt_response(request.prompt, response)
         return response
     except asyncio.TimeoutError:
         return {"error": "LLM service timeout"}
 
 
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(consume_responses())
+# ... (остальной код consume_responses и health_check без изменений)
 
 
 async def consume_responses():

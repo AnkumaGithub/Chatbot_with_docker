@@ -11,7 +11,7 @@ def create_producer():
         'message.max.bytes': 15728640  # 15MB
     })
 
-def create_consumer(group_id="llm-worker-group"):
+def create_consumer(group_id):
     return Consumer({
         'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
         'group.id': group_id,

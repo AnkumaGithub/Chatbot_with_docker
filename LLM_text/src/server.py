@@ -29,16 +29,13 @@ def kafka_worker():
             request = deserialize_message(msg.value())
             print(f"Received request: {request['correlation_id']}")
 
-            # Генерация текста
             result = generate_text(request['prompt'], device)
 
-            # Формирование ответа
             response = {
                 "correlation_id": request['correlation_id'],
                 "generated_text": result
             }
 
-            # Отправка ответа
             producer.produce(
                 topic=RESPONSE_TOPIC,
                 value=serialize_message(response),
@@ -53,7 +50,6 @@ def kafka_worker():
 
 @app.on_event("startup")
 def startup_event():
-    # Запускаем обработчик Kafka в отдельном потоке
     threading.Thread(target=kafka_worker, daemon=True).start()
     print("Kafka worker started")
 

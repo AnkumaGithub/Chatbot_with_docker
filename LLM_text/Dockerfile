@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     librdkafka-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Установка PyTorch для ARM
+# PyTorch для ARM
 RUN pip install --no-cache-dir \
     torch \
     torchvision \
@@ -28,7 +28,6 @@ COPY src/llm.py .
 COPY src/server.py .
 COPY src/kafka_utils.py .
 
-# Предварительная загрузка модели GPT-2
 RUN python3 -c "\
 from transformers import AutoModel; \
 model = AutoModel.from_pretrained('gpt2'); \

@@ -121,7 +121,7 @@ async def generate_text_api(request: GenerationRequest):
 async def consume_responses():
     from kafka_utils import create_consumer, deserialize_message, RESPONSE_TOPIC
 
-    consumer = create_consumer()
+    consumer = create_consumer("api-worker-group")
     consumer.subscribe([RESPONSE_TOPIC])
 
     while True:

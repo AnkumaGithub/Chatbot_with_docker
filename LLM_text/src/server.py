@@ -13,7 +13,7 @@ print(f"Using device: {device}")
 
 def kafka_worker():
     print("Starting Kafka worker...")
-    consumer = create_consumer()
+    consumer = create_consumer("llm-worker-group")
     consumer.subscribe([REQUEST_TOPIC])
     producer = create_producer()
 

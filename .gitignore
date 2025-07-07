@@ -6,6 +6,14 @@
 Bot/telegram-secrets.yaml
 Bot/.env
 
+# txt
+LLM_text/llm_dockerfile.txt
+postgres-db/postgres_dockerfike.txt
+vector-db/vector_dockerfile.txt
+API/api_dockerfile.txt
+Bot/bot_dockerfile.txt
+kafka-broker/kafka_dockerfile.txt
+
 # API
 API/.env
 

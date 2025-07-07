@@ -3,7 +3,6 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import uuid
 import asyncio
-import numpy as np
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from sentence_transformers import SentenceTransformer
@@ -19,13 +18,11 @@ from kafka_utils import (
 app = FastAPI()
 load_dotenv()
 
-# Конфигурация Qdrant
 QDRANT_URL = "http://qdrant-service:6333"
 COLLECTION_NAME = "prompt_cache"
 EMBEDDING_MODEL = 'all-MiniLM-L6-v2'
-SIMILARITY_THRESHOLD = 0.9  # Порог схожести запросов
+SIMILARITY_THRESHOLD = 0.95
 
-# Инициализация моделей и клиентов
 encoder = None
 qdrant_client = None
 pending_requests = {}
@@ -39,13 +36,10 @@ class GenerationRequest(BaseModel):
 async def startup_event():
     global encoder, qdrant_client
 
-    # Инициализация модели для эмбеддингов
     encoder = SentenceTransformer(EMBEDDING_MODEL)
 
-    # Инициализация клиента Qdrant
     qdrant_client = QdrantClient(QDRANT_URL, timeout=10)
 
-    # Создание коллекции если не существует
     try:
         qdrant_client.get_collection(COLLECTION_NAME)
     except Exception:
@@ -57,7 +51,6 @@ async def startup_event():
             )
         )
 
-    # Запуск потребителя Kafka
     asyncio.create_task(consume_responses())
 
 
@@ -96,14 +89,12 @@ async def cache_prompt_response(prompt: str, response: dict):
 
 @app.post("/generate")
 async def generate_text_api(request: GenerationRequest):
-    # Проверка кэша
     cached = await find_similar_prompt(request.prompt)
     if cached:
         return cached["response"]
 
     correlation_id = str(uuid.uuid4())
 
-    # Отправка запроса в Kafka
     producer = create_producer()
     kafka_message = {
         "correlation_id": correlation_id,
@@ -116,20 +107,15 @@ async def generate_text_api(request: GenerationRequest):
     )
     producer.flush()
 
-    # Ожидание ответа
     future = asyncio.Future()
     pending_requests[correlation_id] = future
 
     try:
         response = await asyncio.wait_for(future, timeout=180.0)
-        # Кэширование ответа
         await cache_prompt_response(request.prompt, response)
         return response
     except asyncio.TimeoutError:
         return {"error": "LLM service timeout"}
-
-
-# ... (остальной код consume_responses и health_check без изменений)
 
 
 async def consume_responses():

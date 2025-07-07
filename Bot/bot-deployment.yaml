@@ -19,6 +19,17 @@ spec:
         env:
           - name: API_URL
             value: "http://api-service:8000/generate"
+          - name: POSTGRES_HOST
+            value: "postgres-service"
+          - name: POSTGRES_DB
+            value: "telegram_bot_db"
+          - name: POSTGRES_USER
+            value: "maksimkuznetsov"
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: telegram-secrets
+                key: POSTGRES_PASSWORD
           - name: TELEGRAM_TOKEN
             valueFrom:
               secretKeyRef:

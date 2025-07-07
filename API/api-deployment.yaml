@@ -41,3 +41,24 @@ spec:
     - protocol: TCP
       port: 8000
       targetPort: 8000
+
+---
+# Перед тем как масштабировать нужно добавить Redis для изменения системы возврата ответов в API от LLM
+#apiVersion: autoscaling/v2
+#kind: HorizontalPodAutoscaler
+#metadata:
+#  name: api-hpa
+#spec:
+#  scaleTargetRef:
+#    apiVersion: apps/v1
+#    kind: Deployment
+#    name: api-deployment
+#  minReplicas: 1
+#  maxReplicas: 5
+#  metrics:
+#  - type: Resource
+#    resource:
+#      name: cpu
+#      target:
+#        type: Utilization
+#        averageUtilization: 80

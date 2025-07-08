@@ -1,0 +1,26 @@
+# На случай развёртывания на серверах
+#name: CD Pipeline
+#
+#on:
+#  push:
+#    branches: [main]
+#    paths:
+#      - 'k8s/**'
+#
+#jobs:
+#  deploy:
+#    runs-on: ubuntu-latest
+#    steps:
+#    - uses: actions/checkout@v4
+#
+#    - name: Deploy to Kubernetes
+#      uses: ---
+#      with:
+#        namespace: chatbot
+#        manifests: |
+#          k8s/*.yaml
+#        images: |
+#          ankumadocker/chatbot-api:latest
+#          ankumadocker/chatbot-bot:latest
+#          ankumadocker/chatbot-llm:latest
+#        kubectl-version: 'v1.27.0'

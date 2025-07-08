@@ -20,7 +20,6 @@ jobs:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
-      # Добавляем Kafka для интеграционных тестов
       kafka:
         image: bitnami/kafka:3.7
         env:
@@ -62,8 +61,6 @@ jobs:
     needs: test-api
     steps:
     - uses: actions/checkout@v4
-
-    # Добавим кеширование и для бота
     - name: Cache dependencies
       uses: actions/cache@v3
       with:
@@ -112,7 +109,6 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-mock
 
-    # Фикс: запуск тестов из той же директории
     - name: Run LLM tests
       working-directory: LLM_text
       run: pytest tests/ -v
@@ -123,7 +119,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # Оптимизация: используем Buildx для кеширования
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 

@@ -111,6 +111,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user.username
     )
 
+    if user_id is None:
+        await update.message.reply_text("⚠️ Ошибка базы данных. Попробуйте позже.")
+        return
+
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(

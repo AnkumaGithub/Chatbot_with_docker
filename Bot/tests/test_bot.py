@@ -53,4 +53,4 @@ async def test_db_error():
         await handle_message(update, context)
 
         update.message.reply_text.assert_awaited_once()
-        assert "Ошибка" in update.message.reply_text.call_args[0][0]
+        assert "базы данных" in update.message.reply_text.call_args[0][0]

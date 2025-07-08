@@ -3,6 +3,7 @@ import asyncio
 import pytest
 from fastapi.testclient import TestClient
 from src.api import app
+from src import kafka_utils
 
 
 @pytest.fixture

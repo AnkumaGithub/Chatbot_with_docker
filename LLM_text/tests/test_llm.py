@@ -15,5 +15,5 @@ def test_text_generation(mock_tokenizer, mock_model):
     assert result == "Generated text"
 
 def test_empty_prompt():
-    with pytest.raises(ValueError):
-        generate_text("", device="cpu")
+    result = generate_text("", device="cpu")
+    assert "Пустой запрос" in result

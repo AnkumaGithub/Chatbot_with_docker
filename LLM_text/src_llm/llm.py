@@ -5,6 +5,9 @@ import argparse
 def generate_text(prompt: str, device: torch.device) -> str:
     MODEL_NAME = "gpt2"
 
+    if not prompt.strip():
+        return "Пустой запрос. Пожалуйста, введите текст."
+
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     model = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to(device)
 

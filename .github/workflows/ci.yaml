@@ -1,0 +1,166 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+      # Добавляем Kafka для интеграционных тестов
+      kafka:
+        image: bitnami/kafka:3.7
+        env:
+          KAFKA_ENABLE_KRAFT: "no"
+          KAFKA_ZOOKEEPER_CONNECT: "localhost:2181"
+          KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://localhost:9092"
+        ports:
+          - 9092:9092
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Фикс: убрали дублирующийся checkout
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pip
+          **/__pycache__
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies (API)
+      working-directory: API
+      run: |
+        pip install -r requirements.txt
+        pip install pytest httpx pytest-asyncio pytest-mock
+
+    - name: Run API tests
+      working-directory: API
+      run: pytest tests/ -v
+
+  test-bot:
+    runs-on: ubuntu-latest
+    needs: test-api
+    steps:
+    - uses: actions/checkout@v4
+
+    # Добавим кеширование и для бота
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pip
+          **/__pycache__
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies (Bot)
+      working-directory: Bot
+      run: |
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-mock
+
+    - name: Run Bot tests
+      working-directory: Bot
+      run: pytest tests/ -v
+
+  test-llm:
+    runs-on: ubuntu-latest
+    needs: test-bot
+    steps:
+    - uses: actions/checkout@v4
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pip
+          ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-${{ hashFiles('LLM_text/requirements.txt') }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    # Фикс: правильный путь к requirements.txt
+    - name: Install dependencies (LLM)
+      working-directory: LLM_text
+      run: |
+        pip install -r requirements.txt
+        pip install pytest pytest-mock
+
+    # Фикс: запуск тестов из той же директории
+    - name: Run LLM tests
+      working-directory: LLM_text
+      run: pytest tests/ -v
+
+  build-docker:
+    runs-on: ubuntu-latest
+    needs: [test-api, test-bot, test-llm]
+    steps:
+    - uses: actions/checkout@v4
+
+    # Оптимизация: используем Buildx для кеширования
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build and push API image
+      uses: docker/build-push-action@v4
+      with:
+        context: API
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/api-service:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push Bot image
+      uses: docker/build-push-action@v4
+      with:
+        context: Bot
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/bot-service:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push LLM image
+      uses: docker/build-push-action@v4
+      with:
+        context: LLM_text
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/llm-service:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Scan Docker images
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: |
+          ${{ secrets.DOCKER_USERNAME }}/api-service:latest
+          ${{ secrets.DOCKER_USERNAME }}/bot-service:latest
+          ${{ secrets.DOCKER_USERNAME }}/llm-service:latest
+        format: 'table'
+        exit-code: '1'
+        severity: 'HIGH,CRITICAL'

@@ -139,12 +139,14 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
+
+    # Будем пушить до проверки tryvia, так как Github не даёт достаточно места для загрузки образа
     - name: Build API image
       uses: docker/build-push-action@v4
       with:
         context: API
-        push: false
-        load: true
+        push: true
+        #load: true
         tags: ${{ secrets.DOCKER_USERNAME }}/api-service:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
@@ -153,8 +155,8 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: Bot
-        push: false
-        load: true
+        push: true
+        #load: true
         tags: ${{ secrets.DOCKER_USERNAME }}/bot-service:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
@@ -163,8 +165,8 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: LLM_text
-        push: false
-        load: true
+        push: true
+        #load: true
         tags: ${{ secrets.DOCKER_USERNAME }}/llm-service:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
@@ -173,8 +175,8 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: kafka-broker
-        push: false
-        load: true
+        push: true
+        #load: true
         tags: ${{ secrets.DOCKER_USERNAME }}/kafka-service:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
@@ -183,8 +185,8 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: postgres-db
-        push: false
-        load: true
+        push: true
+        #load: true
         tags: ${{ secrets.DOCKER_USERNAME }}/postgres-service:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
@@ -193,8 +195,8 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: vector-db
-        push: false
-        load: true
+        push: true
+        #load: true
         tags: ${{ secrets.DOCKER_USERNAME }}/qdrant-service:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
@@ -265,32 +267,32 @@ jobs:
         cache-dir: ${{ github.workspace }}/.cache/trivy
         ignore-unfixed: true
 
-    - name: Re-login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Push API image
-      if: success()
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/api-service:latest
-
-    - name: Push Bot image
-      if: success()
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/bot-service:latest
-
-    - name: Push kafka image
-      if: success()
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/kafka-service:latest
-
-    - name: Push LLM image
-      if: success()
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/llm-service:latest
-
-    - name: Push postgres image
-      if: success()
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/postgres-service:latest
-
-    - name: Push qdrant image
-      if: success()
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/qdrant-service:latest
+#    - name: Re-login to Docker Hub
+#      uses: docker/login-action@v3
+#      with:
+#        username: ${{ secrets.DOCKER_USERNAME }}
+#        password: ${{ secrets.DOCKER_PASSWORD }}
+#
+#    - name: Push API image
+#      if: success()
+#      run: docker push ${{ secrets.DOCKER_USERNAME }}/api-service:latest
+#
+#    - name: Push Bot image
+#      if: success()
+#      run: docker push ${{ secrets.DOCKER_USERNAME }}/bot-service:latest
+#
+#    - name: Push kafka image
+#      if: success()
+#      run: docker push ${{ secrets.DOCKER_USERNAME }}/kafka-service:latest
+#
+#    - name: Push LLM image
+#      if: success()
+#      run: docker push ${{ secrets.DOCKER_USERNAME }}/llm-service:latest
+#
+#    - name: Push postgres image
+#      if: success()
+#      run: docker push ${{ secrets.DOCKER_USERNAME }}/postgres-service:latest
+#
+#    - name: Push qdrant image
+#      if: success()
+#      run: docker push ${{ secrets.DOCKER_USERNAME }}/qdrant-service:latest

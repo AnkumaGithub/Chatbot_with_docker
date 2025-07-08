@@ -20,7 +20,9 @@ RUN pip install --no-cache-dir \
     fastapi==0.110.0 \
     uvicorn==0.29.0 \
     python-dotenv==1.0.0 \
-    confluent-kafka==2.3.0
+    confluent-kafka==2.3.0 \
+
+RUN pip install --upgrade setuptools==78.1.1
 
 WORKDIR /app
 

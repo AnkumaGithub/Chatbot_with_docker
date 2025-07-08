@@ -3,8 +3,8 @@ from src_llm.llm import generate_text
 from unittest.mock import patch, MagicMock
 
 
-@patch("llm.AutoModelForCausalLM.from_pretrained")
-@patch("llm.AutoTokenizer.from_pretrained")
+@patch("src_llm.llm.AutoModelForCausalLM.from_pretrained")
+@patch("src_llm.llm.AutoTokenizer.from_pretrained")
 def test_text_generation(mock_tokenizer, mock_model):
     mock_tokenizer.return_value = MagicMock()
     mock_model.return_value = MagicMock()

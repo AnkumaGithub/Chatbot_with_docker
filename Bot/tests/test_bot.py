@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from src.main import start, handle_message
+from src_bot.main import start, handle_message
 
 
 @pytest.mark.asyncio

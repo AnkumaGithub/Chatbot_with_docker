@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from llm import generate_text
 import torch
 import threading
-from kafka_utils import REQUEST_TOPIC, RESPONSE_TOPIC, create_producer, create_consumer, serialize_message, \
+from src_llm.kafka_utils import REQUEST_TOPIC, RESPONSE_TOPIC, create_producer, create_consumer, serialize_message, \
     deserialize_message, delivery_report
 
 app = FastAPI()

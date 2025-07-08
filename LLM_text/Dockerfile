@@ -24,9 +24,9 @@ RUN pip install --no-cache-dir \
 
 WORKDIR /app
 
-COPY src/llm.py .
-COPY src/server.py .
-COPY src/kafka_utils.py .
+COPY src_llm/llm.py .
+COPY src_llm/server.py .
+COPY src_llm/kafka_utils.py .
 
 RUN python3 -c "\
 from transformers import AutoModel; \

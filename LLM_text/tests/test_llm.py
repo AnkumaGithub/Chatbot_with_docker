@@ -1,5 +1,5 @@
 import pytest
-from src.llm import generate_text
+from src_llm.llm import generate_text
 from unittest.mock import patch, MagicMock
 
 

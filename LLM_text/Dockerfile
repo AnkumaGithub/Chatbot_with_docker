@@ -22,8 +22,6 @@ RUN pip install --no-cache-dir \
     python-dotenv==1.0.0 \
     confluent-kafka==2.3.0
 
-RUN pip install --upgrade setuptools==78.1.1
-
 WORKDIR /app
 
 COPY src_llm/llm.py .

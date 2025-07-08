@@ -6,7 +6,7 @@ import asyncio
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from sentence_transformers import SentenceTransformer
-from kafka_utils import (
+from .kafka_utils import (
     REQUEST_TOPIC,
     RESPONSE_TOPIC,
     create_producer,

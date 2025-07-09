@@ -8,7 +8,7 @@ RESPONSE_TOPIC = "generation_responses"
 def create_producer():
     return Producer({
         'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
-        'message.max.bytes': 15728640  # 15MB
+        'message.max.bytes': 15728640
     })
 
 def create_consumer(group_id):

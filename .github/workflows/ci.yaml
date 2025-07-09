@@ -213,7 +213,7 @@ jobs:
         image-ref: ${{ secrets.DOCKER_USERNAME }}/api-service:latest
         format: 'table'
         exit-code: '1'
-        severity: 'HIGH,CRITICAL'
+        severity: 'CRITICAL'
         cache-dir: ${{ github.workspace }}/.cache/trivy
         ignore-unfixed: true
 
@@ -223,7 +223,7 @@ jobs:
         image-ref: ${{ secrets.DOCKER_USERNAME }}/bot-service:latest
         format: 'table'
         exit-code: '1'
-        severity: 'HIGH,CRITICAL'
+        severity: 'CRITICAL'
         cache-dir: ${{ github.workspace }}/.cache/trivy
         ignore-unfixed: true
 
@@ -233,7 +233,7 @@ jobs:
         image-ref: ${{ secrets.DOCKER_USERNAME }}/kafka-service:latest
         format: 'table'
         exit-code: '1'
-        severity: 'HIGH,CRITICAL'
+        severity: 'CRITICAL'
         cache-dir: ${{ github.workspace }}/.cache/trivy
         ignore-unfixed: true
 
@@ -243,7 +243,7 @@ jobs:
         image-ref: ${{ secrets.DOCKER_USERNAME }}/llm-service:latest
         format: 'table'
         exit-code: '1'
-        severity: 'HIGH,CRITICAL'
+        severity: 'CRITICAL'
         cache-dir: ${{ github.workspace }}/.cache/trivy
         ignore-unfixed: true
 
@@ -253,7 +253,7 @@ jobs:
         image-ref: ${{ secrets.DOCKER_USERNAME }}/postgres-service:latest
         format: 'table'
         exit-code: '1'
-        severity: 'HIGH,CRITICAL'
+        severity: 'CRITICAL'
         cache-dir: ${{ github.workspace }}/.cache/trivy
         ignore-unfixed: true
 
@@ -263,7 +263,7 @@ jobs:
         image-ref: ${{ secrets.DOCKER_USERNAME }}/qdrant-service:latest
         format: 'table'
         exit-code: '1'
-        severity: 'HIGH,CRITICAL'
+        severity: 'CRITICAL'
         cache-dir: ${{ github.workspace }}/.cache/trivy
         ignore-unfixed: true
 

@@ -37,3 +37,15 @@ spec:
               secretKeyRef:
                 name: telegram-secrets
                 key: TELEGRAM_TOKEN
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bot-service
+spec:
+  selector:
+    app: bot
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000

@@ -15,12 +15,14 @@ RUN pip install --no-cache-dir \
     --index-url https://download.pytorch.org/whl/nightly/cpu
 
 RUN pip install --no-cache-dir \
-    transformers==4.40.0 \
-    accelerate==0.30.0 \
-    fastapi==0.110.0 \
-    uvicorn==0.29.0 \
+    transformers==4.53.1 \
+    accelerate==1.8.1 \
+    fastapi==0.115.14 \
+    uvicorn==0.35.0 \
     python-dotenv==1.0.0 \
-    confluent-kafka==2.3.0
+    confluent_kafka==2.11.0 \
+    prometheus-client==0.22.1 \
+    prometheus-fastapi-instrumentator==7.1.0
 
 WORKDIR /app
 

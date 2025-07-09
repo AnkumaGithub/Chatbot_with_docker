@@ -3,7 +3,7 @@ import torch
 import argparse
 
 def generate_text(prompt: str, device: torch.device) -> str:
-    MODEL_NAME = "gpt2"
+    MODEL_NAME = "Qwen/Qwen2.5-0.5B"
 
     if not prompt.strip():
         return "Пустой запрос. Пожалуйста, введите текст."

@@ -32,7 +32,7 @@ COPY src_llm/kafka_utils.py .
 
 RUN python3 -c "\
 from transformers import AutoModel; \
-model = AutoModel.from_pretrained('gpt2'); \
-print('GPT-2 model successfully loaded!')"
+model = AutoModel.from_pretrained('Qwen/Qwen2.5-0.5B'); \
+print('Qwen/Qwen2.5-0.5B model successfully loaded!')"
 
 CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]

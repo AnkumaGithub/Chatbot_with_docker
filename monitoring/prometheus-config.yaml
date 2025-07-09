@@ -15,28 +15,22 @@ data:
           - targets: ['api-service:8000']
         relabel_configs:
           - source_labels: [__address__]
-            target_label: __param_target
-          - source_labels: [__param_target]
-            target_label: instance
-          - target_label: __address__
-            replacement: api-service:8000
-      
+            target_label: service
+            replacement: api-service
+          
       - job_name: 'llm-service'
         metrics_path: /metrics
         static_configs:
           - targets: ['llm-service:8000']
         relabel_configs:
           - source_labels: [__address__]
-            target_label: __param_target
-          - source_labels: [__param_target]
-            target_label: instance
-          - target_label: __address__
-            replacement: llm-service:8000
-      
+            target_label: service
+            replacement: llm-service
+        
       - job_name: 'bot-service'
         static_configs:
           - targets: ['bot-service:8000']
-      
+        
       - job_name: 'kafka-exporter'
         static_configs:
           - targets: ['kafka-exporter:9308']

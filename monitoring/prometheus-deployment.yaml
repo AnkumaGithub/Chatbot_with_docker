@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,9 +23,6 @@ spec:
     metadata:
       labels:
         app: prometheus
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9090"
     spec:
       containers:
       - name: prometheus
@@ -35,7 +44,8 @@ spec:
         configMap:
           name: prometheus-config
       - name: storage-volume
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: prometheus-pvc
 ---
 apiVersion: v1
 kind: Service

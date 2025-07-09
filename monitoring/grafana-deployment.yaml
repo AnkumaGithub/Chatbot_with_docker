@@ -32,7 +32,7 @@ spec:
         volumeMounts:
         - name: config-volume
           mountPath: /etc/grafana/provisioning/datasources
-        - name: dashboard-volume
+        - name: dashboards-volume
           mountPath: /etc/grafana/provisioning/dashboards
         - name: storage-volume
           mountPath: /var/lib/grafana
@@ -40,7 +40,7 @@ spec:
       - name: config-volume
         configMap:
           name: grafana-config
-      - name: dashboard-volume
+      - name: dashboards-volume
         configMap:
           name: grafana-dashboards
       - name: storage-volume

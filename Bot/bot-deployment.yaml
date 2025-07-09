@@ -16,6 +16,8 @@ spec:
       - name: bot-container
         image: bot-service:latest
         imagePullPolicy: Never
+        ports:
+          - containerPort: 8000
         env:
           - name: API_URL
             value: "http://api-service:8000/generate"

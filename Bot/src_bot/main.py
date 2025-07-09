@@ -5,6 +5,11 @@ from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import httpx
+from prometheus_client import start_http_server, Counter, Summary
+
+REQUEST_COUNT = Counter('bot_request_count', 'Total number of requests')
+REQUEST_LATENCY = Summary('bot_request_latency_seconds', 'Time spent processing request')
+ERROR_COUNT = Counter('bot_error_count', 'Total number of errors')
 
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -157,6 +162,7 @@ async def on_shutdown(application: Application):
 
 
 def main():
+    start_http_server(8000)
     application = (Application.builder()
                    .token(TELEGRAM_TOKEN)
                    .post_init(on_startup)

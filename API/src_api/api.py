@@ -6,6 +6,7 @@ import asyncio
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from sentence_transformers import SentenceTransformer
+from prometheus_fastapi_instrumentator import Instrumentator
 from kafka_utils import (
     REQUEST_TOPIC,
     RESPONSE_TOPIC,
@@ -35,6 +36,8 @@ class GenerationRequest(BaseModel):
 @app.on_event("startup")
 async def startup_event():
     global encoder, qdrant_client
+
+    Instrumentator().instrument(app).expose(app)
 
     encoder = SentenceTransformer(EMBEDDING_MODEL)
 

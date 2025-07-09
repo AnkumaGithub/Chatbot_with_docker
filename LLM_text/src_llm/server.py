@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from llm import generate_text
 import torch
 import threading
+from prometheus_fastapi_instrumentator import Instrumentator
 from kafka_utils import REQUEST_TOPIC, RESPONSE_TOPIC, create_producer, create_consumer, serialize_message, \
     deserialize_message, delivery_report
 
@@ -50,6 +51,7 @@ def kafka_worker():
 
 @app.on_event("startup")
 def startup_event():
+    Instrumentator().instrument(app).expose(app)
     threading.Thread(target=kafka_worker, daemon=True).start()
     print("Kafka worker started")
 

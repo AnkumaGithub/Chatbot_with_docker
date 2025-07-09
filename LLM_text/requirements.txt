@@ -5,3 +5,4 @@ fastapi==0.115.14
 uvicorn==0.35.0
 python-dotenv>=1.0.0
 confluent_kafka==2.11.0
+prometheus_fastapi_instrumentator==7.1.0

@@ -140,7 +140,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
 
-    # Будем пушить до проверки tryvia, так как Github не даёт достаточно места для загрузки образа
+    # Будем пушить до tryvia scan, так как Github не даёт достаточно места для загрузки образа
     - name: Build API image
       uses: docker/build-push-action@v4
       with:

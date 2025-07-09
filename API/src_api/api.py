@@ -19,6 +19,8 @@ from kafka_utils import (
 app = FastAPI()
 load_dotenv()
 
+Instrumentator().instrument(app).expose(app)
+
 QDRANT_URL = "http://qdrant-service:6333"
 COLLECTION_NAME = "prompt_cache"
 EMBEDDING_MODEL = 'all-MiniLM-L6-v2'
@@ -36,8 +38,6 @@ class GenerationRequest(BaseModel):
 @app.on_event("startup")
 async def startup_event():
     global encoder, qdrant_client
-
-    Instrumentator().instrument(app).expose(app)
 
     encoder = SentenceTransformer(EMBEDDING_MODEL)
 

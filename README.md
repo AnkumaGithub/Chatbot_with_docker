@@ -16,7 +16,7 @@ graph TD
     C -->|Экспорт метрик| H
     B -->|Экспорт метрик| H
     F -->|Экспорт метрик| H
-    K[CI/CD Pipeline] -.->|Сборка/Развертывание| L[Kubernetes Cluster]
+    K[CI Pipeline] -.->|Сборка/Push| L[DockerHub]
     
     subgraph Kubernetes Cluster
         B

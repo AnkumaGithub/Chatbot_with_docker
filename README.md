@@ -1,3 +1,4 @@
+```mermaid
 graph TD
     A[Пользователь Telegram] -->|Сообщение| B(Bot Service)
     B -->|HTTP POST /generate| C(API Gateway)
@@ -51,3 +52,4 @@ graph TD
     style K fill:#2088ff,color:white
     style M fill:#9c27b0,color:white
     style O fill:#3f51b5,color:white
+```

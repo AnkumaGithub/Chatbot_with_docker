@@ -1,3 +1,5 @@
+import os
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -15,32 +17,42 @@ from kafka_utils import (
     serialize_message,
     delivery_report as kafka_delivery_report
 )
+import httpx
 
 app = FastAPI()
 load_dotenv()
+producer = create_producer()
 
 Instrumentator().instrument(app).expose(app)
 
-QDRANT_URL = "http://qdrant-service:6333"
 COLLECTION_NAME = "prompt_cache"
-EMBEDDING_MODEL = 'all-MiniLM-L6-v2'
-SIMILARITY_THRESHOLD = 0.95
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", 'all-MiniLM-L6-v2')
+SIMILARITY_THRESHOLD = 0.9
+USER_AGENT_URL = os.getenv("USER_AGENT_URL", "http://user-agent-service:8000")
+QDRANT_URL = os.getenv("QDRANT_URL", "http://qdrant-service:6333")
 
 encoder = None
 qdrant_client = None
 pending_requests = {}
 
-
 class GenerationRequest(BaseModel):
     prompt: str
 
+class DiagnosticRequest(BaseModel):
+    session_id: str
+    user_id: int
+    user_input: str
+
+class DiagnosticResponse(BaseModel):
+    session_id: str
+    response: str
+    status: str
 
 @app.on_event("startup")
 async def startup_event():
     global encoder, qdrant_client
 
     encoder = SentenceTransformer(EMBEDDING_MODEL)
-
     qdrant_client = QdrantClient(QDRANT_URL, timeout=10)
 
     try:
@@ -56,10 +68,8 @@ async def startup_event():
 
     asyncio.create_task(consume_responses())
 
-
 def get_embedding(text: str) -> list:
     return encoder.encode(text).tolist()
-
 
 async def find_similar_prompt(prompt: str) -> dict:
     embedding = get_embedding(prompt)
@@ -70,7 +80,6 @@ async def find_similar_prompt(prompt: str) -> dict:
         score_threshold=SIMILARITY_THRESHOLD
     )
     return search_result[0].payload if search_result else None
-
 
 async def cache_prompt_response(prompt: str, response: dict):
     embedding = get_embedding(prompt)
@@ -89,7 +98,6 @@ async def cache_prompt_response(prompt: str, response: dict):
         ]
     )
 
-
 @app.post("/generate")
 async def generate_text_api(request: GenerationRequest):
     cached = await find_similar_prompt(request.prompt)
@@ -98,7 +106,6 @@ async def generate_text_api(request: GenerationRequest):
 
     correlation_id = str(uuid.uuid4())
 
-    producer = create_producer()
     kafka_message = {
         "correlation_id": correlation_id,
         "prompt": request.prompt
@@ -120,6 +127,27 @@ async def generate_text_api(request: GenerationRequest):
     except asyncio.TimeoutError:
         return {"error": "LLM service timeout"}
 
+@app.post("/diagnose/start")
+async def start_diagnosis(user_id: int):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{USER_AGENT_URL}/diagnose/start",
+            json={"user_id": user_id}
+        )
+    return response.json()
+
+@app.post("/diagnose/continue")
+async def continue_diagnosis(request: DiagnosticRequest):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{USER_AGENT_URL}/diagnose/continue",
+            json={
+                "session_id": request.session_id,
+                "user_id": request.user_id,
+                "user_input": request.user_input
+            }
+        )
+    return response.json()
 
 async def consume_responses():
     from kafka_utils import create_consumer, deserialize_message, RESPONSE_TOPIC
@@ -145,7 +173,6 @@ async def consume_responses():
                 del pending_requests[corr_id]
         except Exception as e:
             print(f"Error processing response: {str(e)}")
-
 
 @app.get("/health")
 async def health_check():

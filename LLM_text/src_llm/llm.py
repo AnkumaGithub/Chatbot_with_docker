@@ -2,14 +2,21 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 import argparse
 
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps:0")
+else:
+    device = torch.device("cpu")
+
+MODEL_NAME = "Qwen/Qwen2.5-0.5B"
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+model = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to(device)
+
 def generate_text(prompt: str, device: torch.device) -> str:
-    MODEL_NAME = "Qwen/Qwen2.5-0.5B"
 
     if not prompt.strip():
         return "Пустой запрос. Пожалуйста, введите текст."
-
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    model = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to(device)
 
     inputs = tokenizer(prompt, return_tensors="pt").to(device)
 
@@ -27,13 +34,6 @@ def generate_text(prompt: str, device: torch.device) -> str:
     return result
 
 def main():
-    if torch.cuda.is_available():
-        device = torch.device("cuda:0")
-    elif torch.backends.mps.is_available():
-        device = torch.device("mps:0")
-    else:
-        device = torch.device("cpu")
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--prompt', type=str, required=True)
     args = parser.parse_args()

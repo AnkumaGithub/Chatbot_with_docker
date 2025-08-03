@@ -6,6 +6,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import httpx
 from prometheus_client import start_http_server, Counter, Summary
+from enum import Enum
 
 REQUEST_COUNT = Counter('bot_request_count', 'Total number of requests')
 REQUEST_LATENCY = Summary('bot_request_latency_seconds', 'Time spent processing request')
@@ -26,6 +27,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 connection_pool = None
+
+class UserState(Enum):
+    IDLE = 1
+    IN_DIAGNOSIS = 2
+
+user_states = {}
+diagnostic_sessions = {}  # user_id -> session_id
 
 async def init_db_pool():
     global connection_pool
@@ -105,9 +113,61 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Просто отправь мне любое текстовое сообщение, и я обработаю его с помощью нейросети!")
 
+
+async def start_diagnosis(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "http://api-service:8000/diagnose/start",
+            json={"user_id": user_id}
+        )
+
+    if response.status_code == 200:
+        data = response.json()
+        session_id = data["session_id"]
+        diagnostic_sessions[user_id] = session_id
+        user_states[user_id] = UserState.IN_DIAGNOSIS
+        await update.message.reply_text(data["question"])
+    else:
+        await update.message.reply_text("Не удалось начать диагностику. Попробуйте позже.")
+
+
+async def continue_diagnosis(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    session_id = diagnostic_sessions.get(user_id)
+
+    if not session_id:
+        await update.message.reply_text("Сессия диагностики не найдена. Начните заново с /diagnose")
+        return
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "http://api-service:8000/diagnose/continue",
+            json={
+                "session_id": session_id,
+                "user_id": user_id,
+                "user_input": update.message.text
+            }
+        )
+
+    if response.status_code == 200:
+        data = response.json()
+        await update.message.reply_text(data["response"])
+
+        if data["status"] == "completed":
+            user_states[user_id] = UserState.IDLE
+            del diagnostic_sessions[user_id]
+    else:
+        await update.message.reply_text("Ошибка при выполнении диагностики")
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_message = update.message.text
+    user_id = update.effective_user.id
+
+    if user_states.get(user_id) == UserState.IN_DIAGNOSIS:
+        await continue_diagnosis(update, context)
+        return
 
     user_id = await ensure_user_exists(
         user.id,
@@ -172,6 +232,7 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_handler(CommandHandler("diagnose", start_diagnosis))
 
     application.run_polling()
     logger.info("Бот запущен")

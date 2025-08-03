@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medical-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: medical-agent
+  template:
+    metadata:
+      labels:
+        app: medical-agent
+    spec:
+      containers:
+      - name: medical-container
+        image: medical-agent-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+        env:
+        - name: QDRANT_URL
+          value: "http://qdrant-service:6333"
+        - name: EMBEDDING_MODEL
+          value: "all-MiniLM-L6-v2"
+        - name: COLLECTION_NAME
+          value: "diseases"
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "0.5"
+          requests:
+            memory: "256Mi"
+            cpu: "0.2"
+      initContainers:
+      - name: data-loader
+        image: medical-agent-service:latest
+        imagePullPolicy: Never
+        command: ["sh", "-c", "echo 'Waiting for Qdrant...'; sleep 30; python /app/scripts/fill_qdrant.py --csv /app/scripts/Diseases_Symptoms_ru.csv --qdrant http://qdrant-service:6333"]
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: medical-agent-service
+spec:
+  selector:
+    app: medical-agent
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
